@@ -58,6 +58,8 @@ curl http://localhost:8000/v1/chat/completions \
 - **GOG context isolation** — optional graph-of-graphs for codebase-aware compaction
 - **~11k lines of Python** — lightweight, no heavy frameworks
 
+![Arch Diagram](bench/CTXPACTARCH.drawio.svg)
+
 ## Benchmark Results
 
 Tested on Frankenstein (110k tokens → 12k budget, 8 reading comprehension questions) and LoCoMo-MC10 (multi-session conversation QA, 10-choice, 20 questions):
