@@ -4,16 +4,16 @@
 
 ctxpact is a lightweight, OpenAI-compatible proxy that handles oversized inputs. When a 110k-token document hits a 16k-token model, ctxpact extracts the most relevant ~12k tokens to answer accurately — achieving **100% on our reading comprehension benchmark** with the right model+strategy.
 
-Drop it in front of any llama.cpp / Ollama / vLLM server. Works with any agentic framework (Claude Code, OpenClaw, Hermes, etc.) that speaks the OpenAI API.
+Drop it in front of any llama.cpp / Ollama / vLLM / vLLM-mlx server. Works with any agentic framework ( OpenClaw, Hermes, etc.) that speaks the OpenAI API.
 
 ## Why ctxpact?
 
-Local LLMs have small context windows. Real-world agentic use cases send huge payloads — full codebases, long documents, multi-session conversation histories. Current options: truncate (lose data), chunk+summarize (slow, lossy), or pay for cloud APIs (expensive, not private).
+Local LLMs have small context windows. Real-world agentic use cases send huge payloads — full codebases, long documents, multi-session conversation histories. Current options: truncate (lose data), chunk+summarize (slow, lossy), or cloud APIs (expensive, not private).
 
 ctxpact sits between your agent and your local LLM:
 
 ```
-Agent (Claude Code, OpenClaw, Hermes, etc.)
+Agent (OpenClaw, Hermes, etc.)
   │
   ▼
 ctxpact proxy (localhost:8000)       ◄── OpenAI-compatible, drop-in
@@ -30,7 +30,7 @@ Local LLM (llama-server / Ollama / vLLM)
 
 ### Design Alternatives Considered
 
-We evaluated three architectures before building ctxpact:
+Three possible architectures :
 
 ```
 Design A: Standalone Proxy (chosen)          Design B: LiteLLM Plugin
