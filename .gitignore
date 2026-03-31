@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ctxpact
+gog_cache.pkl
+*.db
+*.sqlite
+
+# Benchmark results (large files)
+benchmark_results_*.json
+
+# Logs
+logs/
+*.log

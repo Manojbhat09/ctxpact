@@ -1,0 +1,96 @@
+# ctxpact — Resilient Context Compaction Gateway
+# Configuration for M4 + LFM2-8B-A1B-Q8_0 + llama-server (Dyson @ 169.254.241.219)
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  log_level: "info"
+
+providers:
+  - name: "local-lfm2"
+    url: "http://169.254.241.219:8080/v1"
+    model: "Qwen3.5-9B-Q8_0.gguf"
+    api_key: "dummy"
+    max_context: 16384
+    priority: 1
+    timeout_seconds: 180
+    connect_timeout_seconds: 5
+    stream_timeout_seconds: null
+    health_check:
+      endpoint: "/v1/models"     # llama-server on Dyson serves /v1/models
+      interval_seconds: 10
+      timeout_seconds: 3
+
+  - name: "openrouter-fallback"
+    url: "https://openrouter.ai/api/v1"
+    model: "z-ai/glm-4.5-air:free"
+    api_key: "your-openrouter-api-key"
+    max_context: 128000
+    priority: 2
+    health_check:
+      endpoint: "/models"
+      interval_seconds: 60
+      timeout_seconds: 5
+
+circuit_breaker:
+  failure_threshold: 3
+  recovery_timeout_seconds: 30
+  half_open_max_calls: 1
+
+compaction:
+  enabled: true
+  triggers:
+    token_ratio: 0.70
+    # message_count: 100
+    # turn_count: 30
+
+  stage1_dcp:
+    enabled: true
+    dedup_tool_calls: true
+    strip_superseded_writes: true
+    truncate_errors: true
+    strip_tool_payloads: true
+
+  stage2_summarize:
+    provider: "openrouter-fallback"
+    model: "z-ai/glm-4.5-air:free"
+    max_summary_tokens: 2000
+    retention_window: 6
+    eviction_window: 0.30
+    merge_strategy: "conservative"
+    parallel: true
+
+  preserve:
+    system_prompts: true
+    user_messages: true
+    code_blocks_under_lines: 50
+    file_paths: true
+    error_messages: true
+
+  oversized:
+    strategy: "rlm_v2"        # "rlm_v2" = fixed RLM with IDF ranking (default)
+                              # "chunking" = map-reduce chunked processing (slower, uses LLM)
+    rlm_max_iterations: 10
+    rlm_max_llm_calls: 15
+    book_storage: "memory"    # "memory" or "disk"
+
+context_isolation:
+  enabled: false          # Set to true and configure repo_path to enable GOG
+  repo_path: null         # Path to your codebase root, e.g. "/Users/manoj/clawdbot"
+  graph_cache_path: "./gog_cache.pkl"
+  # include_extensions: [".py", ".ts", ".vue"]  # null = auto-detect
+  exclude_dirs:
+    - "node_modules"
+    - ".venv"
+    - "venv"
+    - "__pycache__"
+    - ".git"
+    - "dist"
+    - "build"
+  rebuild_on_startup: false
+  min_file_lines: 10
+  debug: false
+
+session:
+  store: "memory"
+  ttl_hours: 24
