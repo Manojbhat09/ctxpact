@@ -28,6 +28,51 @@ Local LLM (llama-server / Ollama / vLLM)
 
 **No API keys. No cloud. Everything runs on your hardware.**
 
+### Design Alternatives Considered
+
+We evaluated three architectures before building ctxpact:
+
+```
+Design A: Standalone Proxy (chosen)          Design B: LiteLLM Plugin
+┌──────────┐                                 ┌──────────┐
+│  Agent   │                                 │  Agent   │
+└────┬─────┘                                 └────┬─────┘
+     │                                            │
+     ▼                                            ▼
+┌──────────────┐                             ┌──────────────┐
+│   ctxpact    │ ◄── Full control            │   LiteLLM    │
+│   FastAPI    │     over compaction          │   + plugin   │ ◄── Callback hooks only
+│   ~11k LOC   │     lifecycle               │   ~200 LOC   │     limited lifecycle control
+└────┬─────────┘                             └────┬─────────┘
+     │                                            │
+     ▼                                            ▼
+┌──────────┐                                 ┌──────────┐
+│   LLM    │                                 │   LLM    │
+└──────────┘                                 └──────────┘
+
+
+Design C: Sidecar
+┌──────────┐    ┌───────────┐
+│  Agent   │───▶│  ctxpact  │ ◄── Separate process
+└────┬─────┘    │  sidecar  │     IPC overhead
+     │          └─────┬─────┘
+     ▼                │
+┌──────────┐          │
+│   LLM    │◀─────────┘
+└──────────┘
+```
+
+| | A: Standalone Proxy | B: LiteLLM Plugin | C: Sidecar |
+|---|---|---|---|
+| **Control** | Full (own pipeline) | Callback hooks only | Full |
+| **Multi-stage compaction** | Yes (DCP → summarize → extract) | No (single hook point) | Yes |
+| **Mid-pipeline LLM calls** | Yes (readagent, rlm) | No | Yes |
+| **Dependencies** | FastAPI + httpx | LiteLLM (~50 deps) | FastAPI + IPC |
+| **Complexity** | ~11k LOC | ~200 LOC plugin | ~13k LOC |
+| **Ship time** | 1-2 weeks | 1-2 days | 2-3 weeks |
+
+**We chose A** — the breakthrough strategies (`readagent`, `rlm`) need mid-pipeline LLM calls that LiteLLM's callback system can't support. Full lifecycle control was worth the extra code.
+
 ## Quick Start
 
 ```bash
